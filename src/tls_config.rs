@@ -1,49 +1,47 @@
-extern crate openssl;
+extern crate native_tls;
 
 use errors::*;
 use std::fmt;
-use self::openssl::ssl::{SslConnector, SslConnectorBuilder, SslMethod};
-use self::openssl::x509::X509;
-use self::openssl::pkey::PKey;
+use self::native_tls::{Protocol, TlsConnector, TlsConnectorBuilder as InternalBuilder};
+use self::native_tls::Certificate;
+use self::native_tls::Pkcs12;
 
 #[derive(Clone)]
-pub struct TlsConfig(SslConnector);
+pub struct TlsConfig(TlsConnector);
 
-pub struct TlsConfigBuilder(SslConnectorBuilder);
+pub struct TlsConfigBuilder(InternalBuilder);
 
 impl TlsConfigBuilder {
     pub fn new() -> Result<TlsConfigBuilder, NatsError> {
-        Ok(TlsConfigBuilder(SslConnectorBuilder::new(
-            SslMethod::tls(),
-        )?))
+        Ok(TlsConnector::builder().map(|x| TlsConfigBuilder(x))?)
     }
 
-    pub fn add_root_certificate(&mut self, cert: X509) -> Result<&mut Self, NatsError> {
-        self.0.cert_store_mut().add_cert(cert)?;
+    pub fn add_root_certificate(&mut self, cert: Certificate) -> Result<&mut Self, NatsError> {
+        self.0.add_root_certificate(cert);
         Ok(self)
     }
 
     pub fn add_client_certificate(
         &mut self,
-        cert: X509,
-        key: PKey,
+        cert: Certificate,
+        key: Pkcs12,
     ) -> Result<&mut Self, NatsError> {
         {
             let ctx = &mut self.0;
-            ctx.set_certificate(&cert)?;
-            ctx.set_private_key(&key)?;
-            ctx.check_private_key()?;
+            ctx.add_root_certificate(cert)?;
+            ctx.identity(key)?;
+            //            ctx.check_private_key()?;
         }
         Ok(self)
     }
 
-    pub fn build(self) -> TlsConfig {
-        TlsConfig(self.0.build())
+    pub fn build(self) -> Result<TlsConfig, NatsError> {
+        Ok(self.0.build().map(|x| TlsConfig(x))?)
     }
 }
 
 impl TlsConfig {
-    pub fn into_connector(self) -> SslConnector {
+    pub fn into_connector(self) -> TlsConnector {
         self.0
     }
 }

@@ -1,4 +1,4 @@
-extern crate openssl;
+extern crate native_tls;
 extern crate rand;
 extern crate serde;
 extern crate serde_json;
@@ -12,7 +12,7 @@ use self::rand::{thread_rng, Rng};
 use self::serde_json::de;
 use self::serde_json::value::Value;
 use self::url::Url;
-use self::openssl::ssl::{SslConnector, SslConnectorBuilder, SslMethod};
+use self::native_tls::{Protocol, TlsConnector, TlsConnectorBuilder};
 use std::cmp;
 use std::io;
 use std::io::{BufRead, BufReader, Write};
@@ -799,13 +799,13 @@ fn wait_read_msg(
     Ok(event)
 }
 
-fn default_tls_connector() -> Result<SslConnector, NatsError> {
-    Ok(SslConnectorBuilder::new(SslMethod::tls())?.build())
+fn default_tls_connector() -> Result<TlsConnector, NatsError> {
+    Ok(TlsConnector::builder()?.build()?)
 }
 
 #[test]
 fn client_test() {
-    let mut client = Client::new(vec!["nats://user:password@127.0.0.1"]).unwrap();
+    let mut client = Client::new(vec!["nats://demo.nats.io:4443"]).unwrap();
     client.set_synchronous(false);
     client.set_name("test");
     client.subscribe("chan", None).unwrap();

@@ -1,9 +1,9 @@
-extern crate openssl;
+extern crate native_tls;
 
 use std::io;
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
-use self::openssl::ssl;
+use self::native_tls::TlsStream;
 
 use self::Stream::{Ssl, Tcp};
 
@@ -56,10 +56,10 @@ impl io::Write for Stream {
 
 // Clonable TLS Stream
 #[derive(Debug, Clone)]
-pub struct SslStream(Arc<Mutex<ssl::SslStream<TcpStream>>>);
+pub struct SslStream(Arc<Mutex<TlsStream<TcpStream>>>);
 
 impl SslStream {
-    pub fn new(stream: ssl::SslStream<TcpStream>) -> SslStream {
+    pub fn new(stream: TlsStream<TcpStream>) -> SslStream {
         SslStream(Arc::new(Mutex::new(stream)))
     }
 
