@@ -805,7 +805,7 @@ fn default_tls_connector() -> Result<TlsConnector, NatsError> {
 
 #[test]
 fn client_test() {
-    let mut client = Client::new(vec!["nats://demo.nats.io:4443"]).unwrap();
+    let mut client = Client::new(vec!["nats://127.0.0.1"]).unwrap();
     client.set_synchronous(false);
     client.set_name("test");
     client.subscribe("chan", None).unwrap();
